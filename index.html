@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sticky Notes Online</title>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #fafafa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .logo strong {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .tool-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover {
+            background: #f5f5f5;
+            border-color: #ccc;
+        }
+
+        .main-title {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .main-title h1 {
+            font-family: 'Caveat', cursive;
+            font-size: 64px;
+            font-weight: 700;
+            color: #333;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #e6d5ff 0%, #f0e5ff 100%);
+            display: inline-block;
+            padding: 10px 40px;
+            border-radius: 50px;
+        }
+
+        .boards-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .board {
+            background: white;
+            border-radius: 16px;
+            padding: 0;
+            position: relative;
+            overflow: visible;
+            border: 3px solid;
+        }
+
+        .board.design { border-color: #4dd4ff; }
+        .board.goals { border-color: #d4a5ff; }
+        .board.timeline { border-color: #ffc166; }
+        .board.questions { border-color: #66d9a5; }
+
+        .board-header {
+            position: absolute;
+            top: -15px;
+            left: 25px;
+            z-index: 10;
+        }
+
+        .board-tag {
+            background: #4CAF50;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: capitalize;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .board-tag.design { background: #2196F3; }
+        .board-tag.goals { background: #9C27B0; }
+        .board-tag.timeline { background: #FF9800; }
+        .board-tag.questions { background: #4CAF50; }
+
+        .board-content {
+            padding: 50px 30px 30px 30px;
+            min-height: 380px;
+        }
+
+        .board.design .board-content { background: linear-gradient(135deg, #e3f5ff 0%, #f0f9ff 100%); }
+        .board.goals .board-content { background: linear-gradient(135deg, #f3e5ff 0%, #faf0ff 100%); }
+        .board.timeline .board-content { background: linear-gradient(135deg, #fff5e5 0%, #fffaf0 100%); }
+        .board.questions .board-content { background: linear-gradient(135deg, #e5fff0 0%, #f0fff5 100%); }
+
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            position: relative;
+        }
+
+        .sticky-note {
+            padding: 18px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: move;
+            position: relative;
+            min-height: 100px;
+            transition: all 0.2s;
+            transform: rotate(-1deg);
+        }
+
+        .sticky-note:nth-child(even) {
+            transform: rotate(1deg);
+        }
+
+        .sticky-note:hover {
+            transform: rotate(0deg) scale(1.03);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+
+        .sticky-note textarea {
+            width: 100%;
+            height: 100%;
+            min-height: 70px;
+            border: none;
+            background: transparent;
+            resize: none;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            color: #333;
+            outline: none;
+            line-height: 1.5;
+        }
+
+        .note-delete {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 20px;
+            height: 20px;
+            border: none;
+            background: rgba(0,0,0,0.1);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            color: #666;
+            display: none;
+        }
+
+        .sticky-note:hover .note-delete {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-note-btn {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: #FF1493;
+            color: white;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(255,20,147,0.3);
+            transition: all 0.2s;
+        }
+
+        .add-note-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 14px rgba(255,20,147,0.4);
+        }
+
+        /* Cores das notas */
+        .sticky-note.blue { background: #a8d8ff; }
+        .sticky-note.lightblue { background: #c8e5ff; }
+        .sticky-note.pink { background: #ffb3d9; }
+        .sticky-note.lightpink { background: #ffd4eb; }
+        .sticky-note.yellow { background: #ffe799; }
+        .sticky-note.lightyellow { background: #fff3cc; }
+        .sticky-note.green { background: #99e6b3; }
+        .sticky-note.lightgreen { background: #ccf2d9; }
+        .sticky-note.purple { background: #d9b3ff; }
+        .sticky-note.lightpurple { background: #e6ccff; }
+        .sticky-note.orange { background: #ffcc80; }
+        .sticky-note.lightorange { background: #ffe0b3; }
+
+        /* Decorações */
+        .decoration {
+            position: absolute;
+            pointer-events: none;
+            font-size: 32px;
+        }
+
+        .board-actions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+            z-index: 5;
+        }
+
+        .board-actions button {
+            width: 28px;
+            height: 28px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.9);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .board-actions button:hover {
+            background: white;
+            border-color: rgba(0,0,0,0.2);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 24px;
+        }
+
+        .modal-content input,
+        .modal-content select {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+        }
+
+        .modal-content input:focus,
+        .modal-content select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        @media (max-width: 1024px) {
+            .boards-container {
+                grid-template-columns: 1fr;
+            }
+
+            .main-title h1 {
+                font-size: 48px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .notes-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .main-title h1 {
+                font-size: 36px;
+                padding: 8px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">Playground / <strong>Sticky Notes Online</strong></div>
+        <div class="toolbar">
+            <button class="tool-btn" onclick="addBoard()" title="Adicionar Quadro">➕</button>
+            <button class="tool-btn" onclick="downloadData()" title="Download JSON">📥</button>
+            <button class="tool-btn" onclick="document.getElementById('uploadInput').click()" title="Upload JSON">📤</button>
+            <button class="tool-btn" onclick="clearAll()" title="Limpar Tudo">🗑️</button>
+            <input type="file" id="uploadInput" accept=".json" style="display:none" onchange="uploadData(event)">
+        </div>
+    </div>
+
+    <div class="main-title">
+        <h1>BLOG UI REVAMP</h1>
+    </div>
+
+    <div class="boards-container" id="boardsContainer"></div>
+
+    <div class="modal" id="boardModal">
+        <div class="modal-content">
+            <h2>Novo Quadro</h2>
+            <input type="text" id="boardTitle" placeholder="Nome do quadro (ex: Design)">
+            <select id="boardColor">
+                <option value="design">Azul (Design)</option>
+                <option value="goals">Roxo (Goals)</option>
+                <option value="timeline">Laranja (Timeline)</option>
+                <option value="questions">Verde (Questions)</option>
+            </select>
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                <button class="btn-primary" onclick="createBoard()">Criar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let boards = [
+            {
+                id: 1,
+                title: "Design",
+                color: "design",
+                notes: [
+                    { id: 1, text: "Repite hero slider colors", color: "blue" },
+                    { id: 2, text: "Add Team Interviews", color: "lightblue" },
+                    { id: 3, text: "Implement with developer", color: "blue" },
+                    { id: 4, text: "Switch", color: "lightblue" }
+                ],
+                decorations: [
+                    { emoji: "👍", top: "15%", right: "15%" },
+                    { emoji: "⭐", top: "45%", left: "12%" },
+                    { emoji: "❤️", bottom: "20%", right: "18%" }
+                ]
+            },
+            {
+                id: 2,
+                title: "Goals",
+                color: "goals",
+                notes: [
+                    { id: 1, text: "Increase user retention", color: "pink" },
+                    { id: 2, text: "Simplify product launch in Q4", color: "lightpink" },
+                    { id: 3, text: "Launch", color: "purple" },
+                    { id: 4, text: "Improve user optimization", color: "lightpurple" }
+                ],
+                decorations: [
+                    { emoji: "🔥", top: "25%", left: "15%" },
+                    { emoji: "❤️", bottom: "25%", left: "20%" }
+                ]
+            },
+            {
+                id: 3,
+                title: "Timeline",
+                color: "timeline",
+                notes: [
+                    { id: 1, text: "March - New Service", color: "yellow" },
+                    { id: 2, text: "June - UI Update", color: "lightyellow" },
+                    { id: 3, text: "August - Sept Stakeholder Reviews", color: "yellow" },
+                    { id: 4, text: "December - LAUNCH", color: "orange" }
+                ],
+                decorations: [
+                    { emoji: "💡", top: "35%", left: "8%" },
+                    { emoji: "👆", bottom: "30%", right: "15%" }
+                ]
+            },
+            {
+                id: 4,
+                title: "Questions",
+                color: "questions",
+                notes: [
+                    { id: 1, text: "Will there be major changes in design?", color: "green" },
+                    { id: 2, text: "How much positive impact could half receive?", color: "lightgreen" },
+                    { id: 3, text: "When will we follow up with stakeholders?", color: "lightgreen" }
+                ],
+                decorations: [
+                    { emoji: "🌸", top: "40%", left: "18%" },
+                    { emoji: "👍", bottom: "25%", left: "15%" }
+                ]
+            }
+        ];
+
+        function renderBoards() {
+            const container = document.getElementById('boardsContainer');
+            container.innerHTML = '';
+
+            boards.forEach(board => {
+                const boardDiv = document.createElement('div');
+                boardDiv.className = `board ${board.color}`;
+                
+                const notesHTML = board.notes.map(note => `
+                    <div class="sticky-note ${note.color}" draggable="true">
+                        <textarea onchange="updateNote(${board.id}, ${note.id}, this.value)">${note.text}</textarea>
+                        <button class="note-delete" onclick="deleteNote(${board.id}, ${note.id})">×</button>
+                    </div>
+                `).join('');
+
+                const decorationsHTML = board.decorations ? board.decorations.map(deco => {
+                    const position = [];
+                    if (deco.top) position.push(`top: ${deco.top}`);
+                    if (deco.bottom) position.push(`bottom: ${deco.bottom}`);
+                    if (deco.left) position.push(`left: ${deco.left}`);
+                    if (deco.right) position.push(`right: ${deco.right}`);
+                    return `<div class="decoration" style="${position.join('; ')}">${deco.emoji}</div>`;
+                }).join('') : '';
+
+                boardDiv.innerHTML = `
+                    <div class="board-header">
+                        <span class="board-tag ${board.color}">${board.title}</span>
+                    </div>
+                    <div class="board-actions">
+                        <button onclick="deleteBoard(${board.id})">🗑️</button>
+                    </div>
+                    <div class="board-content">
+                        <div class="notes-grid" id="notes-${board.id}">
+                            ${notesHTML}
+                        </div>
+                        ${decorationsHTML}
+                    </div>
+                    <button class="add-note-btn" onclick="addNote(${board.id})">+</button>
+                `;
+                
+                container.appendChild(boardDiv);
+            });
+
+            saveData();
+        }
+
+        function addNote(boardId) {
+            const board = boards.find(b => b.id === boardId);
+            if (!board) return;
+
+            const colors = ['blue', 'lightblue', 'pink', 'lightpink', 'yellow', 'lightyellow', 'green', 'lightgreen', 'purple', 'lightpurple', 'orange', 'lightorange'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+            const newNote = {
+                id: Date.now(),
+                text: 'Nova nota...',
+                color: randomColor
+            };
+
+            board.notes.push(newNote);
+            renderBoards();
+        }
+
+        function deleteNote(boardId, noteId) {
+            const board = boards.find(b => b.id === boardId);
+            if (!board) return;
+
+            board.notes = board.notes.filter(n => n.id !== noteId);
+            renderBoards();
+        }
+
+        function updateNote(boardId, noteId, text) {
+            const board = boards.find(b => b.id === boardId);
+            if (!board) return;
+
+            const note = board.notes.find(n => n.id === noteId);
+            if (note) {
+                note.text = text;
+                saveData();
+            }
+        }
+
+        function addBoard() {
+            document.getElementById('boardModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('boardModal').classList.remove('active');
+        }
+
+        function createBoard() {
+            const title = document.getElementById('boardTitle').value.trim();
+            const color = document.getElementById('boardColor').value;
+
+            if (!title) {
+                alert('Por favor, insira um nome para o quadro');
+                return;
+            }
+
+            const newBoard = {
+                id: Date.now(),
+                title: title,
+                color: color,
+                notes: [],
+                decorations: []
+            };
+
+            boards.push(newBoard);
+            renderBoards();
+            closeModal();
+            
+            document.getElementById('boardTitle').value = '';
+        }
+
+        function deleteBoard(boardId) {
+            if (confirm('Deseja excluir este quadro?')) {
+                boards = boards.filter(b => b.id !== boardId);
+                renderBoards();
+            }
+        }
+
+        function downloadData() {
+            const dataStr = JSON.stringify(boards, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sticky-notes-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function uploadData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    boards = JSON.parse(e.target.result);
+                    renderBoards();
+                    alert('Dados carregados com sucesso!');
+                    event.target.value = '';
+                } catch (error) {
+                    alert('Erro ao carregar arquivo JSON');
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function clearAll() {
+            if (confirm('Deseja limpar todos os quadros?')) {
+                boards = [];
+                renderBoards();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('stickyNotesData', JSON.stringify(boards));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('stickyNotesData');
+            if (saved) {
+                boards = JSON.parse(saved);
+            }
+        }
+
+        loadData();
+        renderBoards();
+    </script>
+</body>
+</html>
